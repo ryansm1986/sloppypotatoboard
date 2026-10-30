@@ -1,5 +1,5 @@
 import { AudioEngine } from './audio.js';
-import { keyLabel } from './keys.js';
+import { keyLabel, accelFromEvent } from './keys.js';
 
 export const api = window.potato;
 export const engine = new AudioEngine();
@@ -34,6 +34,7 @@ export const app = $state({
   toasts: [],
   maximized: false,
   update: { status: 'idle' }, // see electron/updater.js
+  recording: null, // { id, mods, error } while a tile is listening for its new hotkey
   pulse: 0,
   triggers: {}, // id -> count, drives the "pop" animation
 });
@@ -220,6 +221,46 @@ export async function updateSound(id, patch) {
   if (s) Object.assign(s, patch);
   const { lost } = await api.library.update(id, $state.snapshot(patch));
   if (lost?.length) toast(`${keyLabel(patch.hotkey)} moved here from ${lost.join(', ')}`, 'info');
+}
+
+// ---------------------------------------------------------------------------- quick hotkey (from a tile)
+
+const MODS = [['ctrlKey', 'Ctrl'], ['altKey', 'Alt'], ['shiftKey', 'Shift'], ['metaKey', 'Win']];
+
+function onRecordKey(e) {
+  e.preventDefault();
+  e.stopPropagation(); // keep type-to-filter and arrow keys out of it
+  const rec = app.recording;
+  if (!rec) return;
+  rec.mods = MODS.filter(([k]) => e[k]).map(([, label]) => label); // live "Ctrl + …" preview
+  if (e.type === 'keyup') return;
+  if (e.key === 'Escape') return stopRecording();
+  const r = accelFromEvent(e);
+  if (r.pending) return;
+  if (r.error) {
+    rec.error = r.error;
+    return;
+  }
+  stopRecording();
+  updateSound(rec.id, { hotkey: r.accel });
+}
+
+export function recordHotkey(id) {
+  if (app.recording) stopRecording();
+  app.recording = { id, mods: [], error: '' };
+  window.addEventListener('keydown', onRecordKey, true);
+  window.addEventListener('keyup', onRecordKey, true);
+  window.addEventListener('blur', stopRecording);
+  api.hotkeys.suspend(true); // so keys that are already bound reach us instead of firing
+}
+
+export function stopRecording() {
+  if (!app.recording) return;
+  app.recording = null;
+  window.removeEventListener('keydown', onRecordKey, true);
+  window.removeEventListener('keyup', onRecordKey, true);
+  window.removeEventListener('blur', stopRecording);
+  api.hotkeys.suspend(false);
 }
 
 export async function removeSound(id) {

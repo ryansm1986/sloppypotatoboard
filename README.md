@@ -39,6 +39,7 @@ Use **Hear what games hear** (setup or Settings) to listen to exactly what your 
 ## Tips
 
 - **Type to filter.** No need to click the search box: start typing, arrows move the highlight, Enter plays it, Esc clears. `/` or Ctrl+F also jumps to search. Searching matches names, boards, tags, and hotkeys (try `num 3`).
+- **Quick hotkeys.** Hover a sound and click **＋ Hotkey**, or click the key badge it already has, then press a key. Esc cancels, and there's a Remove button if you want it gone.
 - **Right-click** any sound to rename it, pick an emoji and color, set its volume, add tags, or record a hotkey.
 - Hotkeys without Ctrl/Alt/Shift are limited to F-keys, numpad keys, Insert/Home/End/PgUp/PgDn, so you can still type.
 - **Push-to-talk in game?** Clips only go through while you hold the key. Voice activation works best.

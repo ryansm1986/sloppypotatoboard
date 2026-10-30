@@ -1,7 +1,11 @@
 <script>
-  import { Pencil, Star, Square, Search, Link, FileAudio, TriangleAlert } from '@lucide/svelte';
-  import { scale } from 'svelte/transition';
-  import { app, api, playSound, stopSound, updateSound, importPaths, pickFiles, importUrl, toast, cleanError } from '../lib/store.svelte.js';
+  import { Pencil, Star, Square, Search, Link, FileAudio, TriangleAlert, Keyboard, Plus, X } from '@lucide/svelte';
+  import { scale, fade } from 'svelte/transition';
+  import { backOut } from 'svelte/easing';
+  import {
+    app, api, playSound, stopSound, updateSound, importPaths, pickFiles, importUrl, toast, cleanError,
+    recordHotkey, stopRecording,
+  } from '../lib/store.svelte.js';
   import { keyParts } from '../lib/keys.js';
   import { highlight } from '../lib/filter.svelte.js';
 
@@ -17,6 +21,21 @@
   const isSlot = $derived(!sound.file);
   const duration = $derived(app.durations[sound.id]);
   const nameParts = $derived(highlight(sound.name, query));
+  const recording = $derived(app.recording?.id === sound.id ? app.recording : null);
+
+  // listening for a new hotkey: a click anywhere else, or opening a dialog, cancels it
+  $effect(() => {
+    if (!recording) return;
+    if (app.modal) return stopRecording();
+    const away = (e) => {
+      if (!el?.contains(e.target)) stopRecording();
+    };
+    window.addEventListener('pointerdown', away, true);
+    return () => window.removeEventListener('pointerdown', away, true);
+  });
+  $effect(() => () => {
+    if (app.recording?.id === sound.id) stopRecording();
+  });
 
   $effect(() => {
     if (selected) el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
@@ -64,19 +83,19 @@
   }
 
   function onPointerDown(e) {
-    if (e.button !== 0 || isSlot || e.target.closest('.act, .stop')) return;
+    if (e.button !== 0 || isSlot || recording || e.target.closest('.act, .stop, .hk')) return;
     const r = el.getBoundingClientRect();
     addRipple(e.clientX - r.left, e.clientY - r.top);
   }
 
   function onClick(e) {
-    if (e.target.closest('.act, .stop, .slot-actions')) return;
-    if (isSlot) return;
+    if (e.target.closest('.act, .stop, .slot-actions, .hk, .rec')) return;
+    if (isSlot || recording) return;
     playSound(sound.id);
   }
 
   function onKey(e) {
-    if (e.target !== el) return;
+    if (e.target !== el || recording) return;
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       playSound(sound.id);
@@ -134,10 +153,11 @@
   class:dragging
   class:drop-hover={dropHover}
   class:selected
+  class:recording
   style="--c: {sound.color}"
   role="button"
   tabindex="0"
-  draggable="true"
+  draggable={!recording}
   onclick={onClick}
   onkeydown={onKey}
   onpointerdown={onPointerDown}
@@ -161,10 +181,22 @@
     <span class="emoji">{sound.emoji}</span>
     <div class="top-right">
       {#if sound.hotkey}
-        <span class="keys" class:bad={failed} title={failed ? 'Another app already uses this hotkey' : 'Global hotkey'}>
-          {#if failed}<TriangleAlert size={11} />{/if}
-          {#each keyParts(sound.hotkey) as k}<span class="chip">{k}</span>{/each}
-        </span>
+        {#key sound.hotkey}
+          <button
+            class="hk keys"
+            class:bad={failed}
+            title={failed ? 'Another app already uses this hotkey. Click to pick another' : 'Click to change the hotkey'}
+            onclick={() => recordHotkey(sound.id)}
+            in:scale={{ duration: 380, start: 0.5, easing: backOut }}
+          >
+            {#if failed}<TriangleAlert size={11} />{/if}
+            {#each keyParts(sound.hotkey) as k}<span class="chip">{k}</span>{/each}
+          </button>
+        {/key}
+      {:else if !isSlot}
+        <button class="hk add" title="Give this sound a hotkey" onclick={() => recordHotkey(sound.id)}>
+          <Plus size={12} strokeWidth={2.6} /> Hotkey
+        </button>
       {/if}
     </div>
   </div>
@@ -219,6 +251,36 @@
     </button>
     <button class="act" title="Edit" onclick={edit}><Pencil size={14} /></button>
   </div>
+
+  {#if recording}
+    <div class="rec" role="presentation" onclick={stopRecording} transition:fade={{ duration: 140 }}>
+      <div class="rec-key" in:scale={{ duration: 300, start: 0.8, easing: backOut }}>
+        {#if recording.mods.length}
+          {#each recording.mods as m}<span class="chip">{m}</span><span class="plus">+</span>{/each}
+          <span class="dots"><i></i><i></i><i></i></span>
+        {:else}
+          <Keyboard size={18} /> Press a key
+        {/if}
+      </div>
+      {#if recording.error}
+        <div class="rec-err" in:fade={{ duration: 120 }}>{recording.error}</div>
+      {:else}
+        <div class="rec-hint">Try the numpad · Esc cancels</div>
+      {/if}
+      {#if sound.hotkey}
+        <button
+          class="sbtn rec-remove"
+          onclick={(e) => {
+            e.stopPropagation();
+            stopRecording();
+            updateSound(sound.id, { hotkey: null });
+          }}
+        >
+          <X size={12} /> Remove hotkey
+        </button>
+      {/if}
+    </div>
+  {/if}
 
   {#if playing}
     <button class="stop" title="Stop" onclick={() => stopSound(sound.id)} transition:scale={{ duration: 200, start: 0.4 }}>
@@ -417,6 +479,48 @@
     gap: 3px;
     color: var(--text);
   }
+  .hk {
+    border-radius: 8px;
+    transition:
+      transform 0.25s var(--spring),
+      background 0.15s,
+      box-shadow 0.15s,
+      opacity 0.2s;
+  }
+  .keys.hk {
+    padding: 2px;
+    margin: -2px;
+  }
+  .keys.hk:hover {
+    background: color-mix(in oklab, var(--c) 30%, transparent);
+    box-shadow: 0 0 0 1px color-mix(in oklab, var(--c) 60%, transparent);
+    transform: scale(1.06);
+  }
+  .add {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    height: 22px;
+    padding: 0 8px 0 6px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    border: 1px dashed color-mix(in oklab, var(--c) 55%, rgba(255, 255, 255, 0.25));
+    background: rgba(0, 0, 0, 0.25);
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  .tile:hover .add,
+  .tile:focus-within .add {
+    opacity: 1;
+    transform: none;
+  }
+  .add:hover {
+    color: var(--text);
+    border-style: solid;
+    background: color-mix(in oklab, var(--c) 28%, rgba(0, 0, 0, 0.3));
+    transform: scale(1.06);
+  }
   .keys.bad {
     color: #ffb3ba;
   }
@@ -585,6 +689,108 @@
   }
   .tile.playing .top-right {
     opacity: 0;
+  }
+
+  /* listening for a new hotkey */
+  .tile.recording {
+    cursor: default;
+    transform: translateY(-3px);
+    border-color: var(--c);
+    box-shadow:
+      0 0 0 2px color-mix(in oklab, var(--c) 70%, transparent),
+      0 0 0 7px color-mix(in oklab, var(--c) 18%, transparent),
+      0 18px 44px -14px color-mix(in oklab, var(--c) 70%, transparent);
+    animation: listen 1.4s ease-in-out infinite;
+  }
+  @keyframes listen {
+    50% {
+      box-shadow:
+        0 0 0 2px var(--c),
+        0 0 0 10px color-mix(in oklab, var(--c) 8%, transparent),
+        0 18px 44px -14px color-mix(in oklab, var(--c) 70%, transparent);
+    }
+  }
+  .tile > .top,
+  .tile > .name,
+  .tile > .bottom {
+    transition: opacity 0.18s;
+  }
+  .tile.recording > .top,
+  .tile.recording > .name,
+  .tile.recording > .bottom,
+  .tile.recording .acts {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .rec {
+    position: absolute;
+    inset: 0;
+    z-index: 6;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px;
+    text-align: center;
+    background:
+      radial-gradient(120% 100% at 50% 0%, color-mix(in oklab, var(--c) 30%, transparent), transparent 70%),
+      rgba(11, 9, 18, 0.55);
+  }
+  .rec-key {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 28px;
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 16px;
+  }
+  .rec-key .chip {
+    height: 26px;
+    font-size: 12.5px;
+    border-color: color-mix(in oklab, var(--c) 60%, transparent);
+  }
+  .plus {
+    color: var(--dim);
+    font-size: 12px;
+  }
+  .dots {
+    display: flex;
+    gap: 3px;
+  }
+  .dots i {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--c);
+    animation: blink 1s ease-in-out infinite;
+  }
+  .dots i:nth-child(2) {
+    animation-delay: 0.15s;
+  }
+  .dots i:nth-child(3) {
+    animation-delay: 0.3s;
+  }
+  @keyframes blink {
+    50% {
+      opacity: 0.25;
+      transform: translateY(-2px);
+    }
+  }
+  .rec-hint {
+    font-size: 11px;
+    color: var(--dim);
+  }
+  .rec-err {
+    font-size: 11.5px;
+    line-height: 1.3;
+    color: #ffb3ba;
+    max-width: 210px;
+  }
+  .rec-remove {
+    height: 24px;
+    font-size: 11px;
   }
 
   /* empty slot */

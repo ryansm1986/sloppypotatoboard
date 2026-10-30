@@ -25,6 +25,20 @@ module.exports = async ({ app, win }) => {
       await wait(900);
     } else if (step.startsWith('shot:')) await shot(step.slice(5));
     else if (step.startsWith('wait:')) await wait(Number(step.slice(5)));
+    else if (step.startsWith('sendkey:')) {
+      // key straight into the window (works even when another app has focus), e.g. sendkey:num7 or sendkey:Ctrl+A
+      const parts = step.slice(8).split('+');
+      const keyCode = parts.pop();
+      const modifiers = parts.map((m) => m.toLowerCase());
+      for (const type of ['keyDown', 'keyUp']) win.webContents.sendInputEvent({ type, keyCode, modifiers });
+      console.log('sent', step.slice(8));
+      await wait(600);
+    } else if (step.startsWith('mouse:')) {
+      // hover at x,y (window coords) so :hover styles show up in screenshots
+      const [x, y] = step.slice(6).split(',').map(Number);
+      win.webContents.sendInputEvent({ type: 'mouseMove', x, y });
+      await wait(500);
+    }
     else if (step.startsWith('key:')) {
       // real OS-level key press, to prove global hotkeys fire
       const vk = step.slice(4);
