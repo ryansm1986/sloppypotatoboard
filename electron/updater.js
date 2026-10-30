@@ -156,28 +156,33 @@ class Updater {
     const s = this.state.status;
     if (s === 'available') return shell.openExternal(this.state.url || RELEASES_PAGE);
     if (s !== 'ready') return;
-    await this.beforeInstall();
-    if (this.au) {
-      this.au.quitAndInstall(true, true); // silent install, then relaunch
-      return;
-    }
-    if (this.pending) {
-      // Wait for this copy (and the portable launcher) to exit, swap the exe, relaunch.
-      const { file, exe } = this.pending;
-      const script = [
-        `$new = ${psQuote(file)}; $exe = ${psQuote(exe)}`,
-        'for ($i = 0; $i -lt 120; $i++) {',
-        '  try { Move-Item -LiteralPath $new -Destination $exe -Force -ErrorAction Stop; break } catch { Start-Sleep -Milliseconds 500 }',
-        '}',
-        'Start-Process -FilePath $exe',
-      ].join('\n');
-      spawn('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', script], {
-        detached: true,
-        stdio: 'ignore',
-        windowsHide: true,
-      }).unref();
-      app.quit();
-    }
+    this.relaunch = true;
+    await this.beforeInstall(); // main's shutdown(), which also calls onQuit()
+    if (this.au) this.au.quitAndInstall(true, true); // silent install, then relaunch
+    else app.quit();
+  }
+
+  /**
+   * Portable: once this copy (and its launcher) has exited, swap in the downloaded exe.
+   * Runs on every quit, like the installer's install-on-quit; relaunches only for "Restart".
+   */
+  onQuit() {
+    if (!this.pending || this.swapping) return;
+    this.swapping = true;
+    const { file, exe } = this.pending;
+    const script = [
+      `$new = ${psQuote(file)}; $exe = ${psQuote(exe)}`,
+      'for ($i = 0; $i -lt 120; $i++) {',
+      '  try { Move-Item -LiteralPath $new -Destination $exe -Force -ErrorAction Stop; break } catch { Start-Sleep -Milliseconds 500 }',
+      '}',
+      this.relaunch ? 'Start-Process -FilePath $exe' : '',
+    ].join('; ');
+    this.log('portable swap scheduled', exe, this.relaunch ? '(relaunch)' : '');
+    spawn('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', script], {
+      detached: true,
+      stdio: 'ignore',
+      windowsHide: true,
+    }).unref();
   }
 }
 

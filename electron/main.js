@@ -391,6 +391,7 @@ function shutdown() {
       if (settings?.data.manageDefaultMic) {
         await Promise.race([restoreDefaultMic().catch(() => {}), new Promise((r) => setTimeout(r, 4000))]);
       }
+      updater?.onQuit();
       cleanedUp = true;
     })();
   }
