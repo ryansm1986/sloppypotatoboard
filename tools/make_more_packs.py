@@ -32,6 +32,12 @@ GPWS = dict(voice="en-US-GuyNeural", rate="-6%", pitch="-14Hz")
 
 # id, name, emoji, color, voice, role, text
 CABIN = [
+    ("fasten-seatbelt", "Fasten Seatbelt Sign", "💺", "#4dabf7", ATTENDANT, "attendant",
+     "Ladies and gentlemen, the captain has turned on the fasten seatbelt sign. Please return to your seats "
+     "and keep your seatbelts securely fastened. Thank you."),
+    ("seatbelt-enemy-team", "Seatbelt: Turbulence Ahead", "🌩️", "#ffd43b", ATTENDANT, "attendant",
+     "Ladies and gentlemen, the captain has turned on the fasten seatbelt sign. Please return to your seats. "
+     "We are expecting some turbulence ahead... and by turbulence, we mean the enemy team."),
     ("wifi", "Wi-Fi Password", "📡", "#4dabf7", CAPTAIN, "captain",
      "Folks, this is your captain. The in-flight Wi-Fi is now available. The password is... stop lagging. "
      "All one word. All lowercase."),

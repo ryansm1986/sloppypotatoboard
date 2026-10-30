@@ -14,10 +14,10 @@ const { Library } = require('../electron/library');
 
   const airplane = d().sounds.filter((s) => s.category === 'airplane');
   const slots = d().sounds.filter((s) => s.category === 'itysl');
-  assert.equal(airplane.length, 35, 'seeds both airplane batches into one board');
+  assert.equal(airplane.length, 37, 'seeds both airplane batches into one board');
   assert.equal(d().sounds.filter((s) => s.category === 'cockpit').length, 10, 'seeds the cockpit board');
   assert.deepEqual(d().categories.map((c) => c.id), ['airplane', 'cockpit', 'itysl', 'mine']);
-  assert.deepEqual(d().installedPacks, ['airplane', 'airplane-2', 'cockpit']);
+  assert.equal(d().installedSounds.length, 19 + 18 + 10, 'remembers every bundled sound it installed');
   assert.ok(slots.length >= 5 && slots.every((s) => !s.file), 'seeds empty ITYSL slots');
   assert.equal(airplane[0].hotkey, 'num1');
   assert.deepEqual(airplane[0].tags, ['chime']);
@@ -30,7 +30,24 @@ const { Library } = require('../electron/library');
   assert.equal(again.data.sounds.length, d().sounds.length, 'no duplicate packs on restart');
   again.close();
 
-  // upgrading a 1.0 library: only the new packs get added, tags get backfilled
+  // a sound the user deleted stays deleted; a sound new to an existing pack shows up
+  {
+    const doomed = d().sounds.find((s) => s.name === 'Tuna Sandwich');
+    await lib.remove(doomed.id);
+    d().installedSounds = d().installedSounds.filter((k) => k !== 'airplane-2/fasten-seatbelt');
+    d().sounds = d().sounds.filter((s) => s.file !== 'airplane-2-fasten-seatbelt.flac');
+    lib.store.save(true);
+    lib.close();
+    const re = new Library(path.join(tmp, 'user'), res);
+    await re.init();
+    assert.ok(!re.data.sounds.some((s) => s.name === 'Tuna Sandwich'), 'deleted pack sound is not re-added');
+    assert.ok(re.data.sounds.some((s) => s.name === 'Fasten Seatbelt Sign'), 'new sound in an existing pack is added');
+    assert.deepEqual(re.newPacks.map((p) => [p.category, p.count]), [['airplane', 1]]);
+    re.close();
+    await lib.init();
+  }
+
+  // upgrading a 1.0 library: only the new sounds get added, tags get backfilled
   const oldDir = path.join(tmp, 'old');
   fs.mkdirSync(path.join(oldDir, 'sounds'), { recursive: true });
   const v1 = { version: 1, categories: [{ id: 'airplane', name: 'Airplane', emoji: '✈️' }, { id: 'itysl', name: 'ITYSL', emoji: '🌭' }, { id: 'mine', name: 'My Sounds', emoji: '🥔' }], sounds: [] };
@@ -43,11 +60,10 @@ const { Library } = require('../electron/library');
   const up = new Library(oldDir, res);
   await up.init();
   assert.deepEqual(up.data.categories.map((c) => c.id), ['airplane', 'cockpit', 'itysl', 'mine'], 'new board slots in before ITYSL');
-  assert.equal(up.data.sounds.filter((s) => s.category === 'airplane').length, 2 + 16, 'adds batch 2, not batch 1 again');
+  assert.equal(up.data.sounds.filter((s) => s.category === 'airplane').length, 2 + 18, 'adds batch 2, not batch 1 again');
   assert.equal(up.data.sounds[2].category, 'airplane', 'batch 2 lands right after the existing airplane sounds');
   assert.deepEqual(up.data.sounds[0].tags, ['chime'], 'backfills tags');
-  assert.ok(!up.newPacks.some((p) => p.id === 'airplane'));
-  assert.equal(up.newPacks.length, 2);
+  assert.deepEqual(up.newPacks.map((p) => [p.name, p.count]), [['Airplane', 18], ['Cockpit', 10]], 'reports new sounds per board');
   up.close();
 
   // tags can be edited and are cleaned up
@@ -72,17 +88,17 @@ const { Library } = require('../electron/library');
   const ids = d().sounds.filter((s) => s.category === 'airplane').map((s) => s.id);
   lib.reorder([...ids].reverse());
   assert.equal(d().sounds.filter((s) => s.category === 'airplane')[0].id, ids[ids.length - 1]);
-  assert.equal(d().sounds.findIndex((s) => s.category === 'cockpit') > 34, true, 'other sounds keep their slots');
+  assert.equal(d().sounds.findIndex((s) => s.category === 'cockpit') > 30, true, 'other sounds keep their slots');
 
   // pack roundtrip
   const pack = path.join(tmp, 'Airplane.potatopack');
   const ex = await lib.exportPack('airplane', pack);
-  assert.equal(ex.count, 35);
+  assert.equal(ex.count, 36);
   const before = d().sounds.length;
   const im = await lib.importPack(pack);
-  assert.equal(im.count, 35);
+  assert.equal(im.count, 36);
   assert.equal(im.name, 'Airplane 2', 'dedupes the board name');
-  assert.equal(d().sounds.length, before + 35);
+  assert.equal(d().sounds.length, before + 36);
   assert.ok(d().sounds.filter((s) => s.category === im.category).every((s) => s.tags.length), 'tags travel with packs');
   assert.ok(d().sounds.filter((s) => s.category === im.category).every((s) => !s.hotkey), 'hotkeys are not imported');
 

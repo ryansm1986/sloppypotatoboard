@@ -28,6 +28,8 @@ const cleanTags = (tags) =>
     ? [...new Set(tags.map((t) => String(t).toLowerCase().trim().slice(0, 24)).filter(Boolean))].slice(0, 8)
     : [];
 
+const soundKey = (pack, s) => `${pack.id}/${s.id || s.file}`;
+
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 const newId = () => crypto.randomBytes(6).toString('hex');
 
@@ -81,9 +83,10 @@ class Library extends EventEmitter {
   async init() {
     await fsp.mkdir(this.soundsDir, { recursive: true });
     this.fresh = !this.store.load();
-    if (this.fresh) this.store.data = { version: 2, installedPacks: [], categories: [], sounds: [] };
-    this.migrate();
-    this.newPacks = await this.installBundledPacks();
+    if (this.fresh) this.store.data = { version: 2, installedSounds: [], categories: [], sounds: [] };
+    const packs = await this.bundledPacks();
+    this.migrate(packs);
+    this.newPacks = await this.installBundledSounds(packs);
     if (this.fresh) this.addSlots();
     this.ensureCategory('mine', 'My Sounds', '🥔');
     this.store.save(true);
@@ -101,13 +104,15 @@ class Library extends EventEmitter {
   }
 
   /** Bring older libraries up to date. */
-  migrate() {
+  migrate(packs) {
     const d = this.data;
-    if (!Array.isArray(d.installedPacks)) {
-      // 1.0 libraries only ever had the airplane pack
+    if (!Array.isArray(d.installedSounds)) {
+      // 1.0 libraries only ever had the airplane pack: count all of it as seen, even sounds deleted since
       const hadAirplane = d.sounds.some((s) => s.file?.startsWith('airplane-')) || d.categories.some((c) => c.id === 'airplane');
-      d.installedPacks = hadAirplane ? ['airplane'] : [];
+      const airplane = packs.find((p) => p.id === 'airplane');
+      d.installedSounds = hadAirplane && airplane ? airplane.sounds.map((s) => soundKey(airplane, s)) : [];
     }
+    delete d.installedPacks;
     for (const s of d.sounds) s.tags = cleanTags(s.tags);
     d.version = 2;
   }
@@ -127,18 +132,19 @@ class Library extends EventEmitter {
   }
 
   /**
-   * Installs any bundled pack this library hasn't seen yet, so app updates can ship new
-   * sounds. Packs the user already has (or deleted) are never re-added.
+   * Adds every bundled sound this library hasn't seen yet, so app updates can ship new
+   * sounds (even into an existing pack). Anything already seen is never re-added, so
+   * sounds the user deleted stay deleted.
    */
-  async installBundledPacks() {
+  async installBundledSounds(packs) {
     const d = this.data;
+    const seen = new Set(d.installedSounds);
     const taken = new Set(d.sounds.map((s) => s.hotkey?.toLowerCase()).filter(Boolean));
     const added = [];
-    for (const pack of await this.bundledPacks()) {
-      if (d.installedPacks.includes(pack.id)) {
-        this.backfillTags(pack);
-        continue;
-      }
+    for (const pack of packs) {
+      this.backfillTags(pack);
+      const fresh = pack.sounds.filter((s) => !seen.has(soundKey(pack, s)));
+      if (!fresh.length) continue;
       const category = pack.category || pack.id;
       if (!d.categories.some((c) => c.id === category)) {
         const cat = { id: category, name: pack.name, emoji: pack.emoji || '📦' };
@@ -150,7 +156,7 @@ class Library extends EventEmitter {
       const last = d.sounds.findLastIndex((s) => s.category === category);
       let at = last === -1 ? d.sounds.length : last + 1;
       let count = 0;
-      for (const s of pack.sounds) {
+      for (const s of fresh) {
         const file = `${pack.id}-${s.file}`;
         try {
           await fsp.copyFile(path.join(pack.dir, s.file), path.join(this.soundsDir, file));
@@ -161,12 +167,18 @@ class Library extends EventEmitter {
         const hotkey = s.hotkey && !taken.has(s.hotkey.toLowerCase()) ? s.hotkey : null;
         if (hotkey) taken.add(hotkey.toLowerCase());
         d.sounds.splice(at++, 0, this.makeSound({ ...s, file, hotkey, category }));
+        d.installedSounds.push(soundKey(pack, s));
         count++;
       }
-      d.installedPacks.push(pack.id);
-      added.push({ id: pack.id, name: pack.name, category, count });
+      if (count) added.push({ id: pack.id, name: pack.name, category, count });
     }
-    return added;
+    // two packs can feed one board ("Airplane" + its second batch): report boards, not packs
+    const byBoard = new Map();
+    for (const a of added) {
+      const prev = byBoard.get(a.category);
+      byBoard.set(a.category, prev ? { ...prev, count: prev.count + a.count } : a);
+    }
+    return [...byBoard.values()];
   }
 
   backfillTags(pack) {

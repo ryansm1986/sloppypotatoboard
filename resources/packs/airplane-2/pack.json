@@ -8,6 +8,30 @@
   "emoji": "✈️",
   "sounds": [
     {
+      "id": "fasten-seatbelt",
+      "name": "Fasten Seatbelt Sign",
+      "emoji": "💺",
+      "color": "#4dabf7",
+      "tags": [
+        "announcement",
+        "attendant"
+      ],
+      "file": "fasten-seatbelt.flac",
+      "hotkey": null
+    },
+    {
+      "id": "seatbelt-enemy-team",
+      "name": "Seatbelt: Turbulence Ahead",
+      "emoji": "🌩️",
+      "color": "#ffd43b",
+      "tags": [
+        "announcement",
+        "attendant"
+      ],
+      "file": "seatbelt-enemy-team.flac",
+      "hotkey": null
+    },
+    {
       "id": "wifi",
       "name": "Wi-Fi Password",
       "emoji": "📡",
