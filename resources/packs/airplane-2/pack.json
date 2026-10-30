@@ -1,0 +1,203 @@
+{
+  "format": "sloppy-potato-pack",
+  "version": 1,
+  "id": "airplane-2",
+  "category": "airplane",
+  "order": 2,
+  "name": "Airplane",
+  "emoji": "✈️",
+  "sounds": [
+    {
+      "id": "wifi",
+      "name": "Wi-Fi Password",
+      "emoji": "📡",
+      "color": "#4dabf7",
+      "tags": [
+        "announcement",
+        "captain"
+      ],
+      "file": "wifi.flac",
+      "hotkey": null
+    },
+    {
+      "id": "teammates-denver",
+      "name": "Your Teammates Are In Denver",
+      "emoji": "🧳",
+      "color": "#ffa94d",
+      "tags": [
+        "announcement",
+        "captain"
+      ],
+      "file": "teammates-denver.flac",
+      "hotkey": null
+    },
+    {
+      "id": "sneeze",
+      "name": "That Was Me",
+      "emoji": "🤧",
+      "color": "#69db7c",
+      "tags": [
+        "announcement",
+        "captain"
+      ],
+      "file": "sneeze.flac",
+      "hotkey": null
+    },
+    {
+      "id": "barrel-roll",
+      "name": "Barrel Roll Vote",
+      "emoji": "🗳️",
+      "color": "#b197fc",
+      "tags": [
+        "announcement",
+        "captain"
+      ],
+      "file": "barrel-roll.flac",
+      "hotkey": null
+    },
+    {
+      "id": "respawn-point",
+      "name": "Respawn Point",
+      "emoji": "📍",
+      "color": "#ff6b6b",
+      "tags": [
+        "announcement",
+        "captain"
+      ],
+      "file": "respawn-point.flac",
+      "hotkey": null
+    },
+    {
+      "id": "boss-fight",
+      "name": "Boss Fight Ahead",
+      "emoji": "🐉",
+      "color": "#38d9a9",
+      "tags": [
+        "announcement",
+        "captain"
+      ],
+      "file": "boss-fight.flac",
+      "hotkey": null
+    },
+    {
+      "id": "afk",
+      "name": "Captain Is AFK",
+      "emoji": "💤",
+      "color": "#748ffc",
+      "tags": [
+        "announcement",
+        "captain"
+      ],
+      "file": "afk.flac",
+      "hotkey": null
+    },
+    {
+      "id": "lobby",
+      "name": "Returned To Lobby",
+      "emoji": "🔙",
+      "color": "#f783ac",
+      "tags": [
+        "announcement",
+        "captain"
+      ],
+      "file": "lobby.flac",
+      "hotkey": null
+    },
+    {
+      "id": "overtime",
+      "name": "Overtime",
+      "emoji": "⏱️",
+      "color": "#ffd43b",
+      "tags": [
+        "announcement",
+        "captain"
+      ],
+      "file": "overtime.flac",
+      "hotkey": null
+    },
+    {
+      "id": "clutch",
+      "name": "Absolute Clutch",
+      "emoji": "🛬",
+      "color": "#69db7c",
+      "tags": [
+        "announcement",
+        "captain"
+      ],
+      "file": "clutch.flac",
+      "hotkey": null
+    },
+    {
+      "id": "camper",
+      "name": "Lavatory Camper",
+      "emoji": "🚽",
+      "color": "#4dabf7",
+      "tags": [
+        "announcement",
+        "attendant"
+      ],
+      "file": "camper.flac",
+      "hotkey": null
+    },
+    {
+      "id": "exit-row",
+      "name": "Exit Row Judgment",
+      "emoji": "🚪",
+      "color": "#ffa94d",
+      "tags": [
+        "announcement",
+        "attendant"
+      ],
+      "file": "exit-row.flac",
+      "hotkey": null
+    },
+    {
+      "id": "oxygen",
+      "name": "Oxygen Masks",
+      "emoji": "😷",
+      "color": "#38d9a9",
+      "tags": [
+        "announcement",
+        "attendant"
+      ],
+      "file": "oxygen.flac",
+      "hotkey": null
+    },
+    {
+      "id": "trash-talk",
+      "name": "Trash Talk Policy",
+      "emoji": "🗑️",
+      "color": "#e599f7",
+      "tags": [
+        "announcement",
+        "attendant"
+      ],
+      "file": "trash-talk.flac",
+      "hotkey": null
+    },
+    {
+      "id": "report",
+      "name": "Report After The Flight",
+      "emoji": "🚩",
+      "color": "#ff6b6b",
+      "tags": [
+        "announcement",
+        "attendant"
+      ],
+      "file": "report.flac",
+      "hotkey": null
+    },
+    {
+      "id": "not-your-healer",
+      "name": "I Am Not Your Healer",
+      "emoji": "🩺",
+      "color": "#f783ac",
+      "tags": [
+        "announcement",
+        "attendant"
+      ],
+      "file": "not-your-healer.flac",
+      "hotkey": null
+    }
+  ]
+}

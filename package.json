@@ -1,0 +1,97 @@
+{
+  "name": "sloppy-potato-board",
+  "productName": "Sloppy Potato Board",
+  "version": "1.1.0",
+  "description": "A pretty soundboard that plays clips through your mic into games and voice chat.",
+  "author": "Sloppy Potato",
+  "license": "MIT",
+  "private": true,
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "vite build && electron .",
+    "build:ui": "vite build",
+    "test": "node tools/test-library.js",
+    "dist": "vite build && electron-builder --win --publish never",
+    "release": "vite build && electron-builder --win --publish always",
+    "sounds": "tools/.venv/Scripts/python tools/make_airplane_pack.py && tools/.venv/Scripts/python tools/make_more_packs.py"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.11",
+    "fflate": "^0.8.3"
+  },
+  "devDependencies": {
+    "@fontsource-variable/fredoka": "^5.2.0",
+    "@fontsource-variable/inter": "^5.2.0",
+    "@lucide/svelte": "^1.64.0",
+    "@sveltejs/vite-plugin-svelte": "^7.3.1",
+    "electron": "^45.1.0",
+    "electron-builder": "^26.18.0",
+    "svelte": "^5.57.3",
+    "vite": "^8.3.5"
+  },
+  "build": {
+    "appId": "com.sloppypotato.board",
+    "productName": "Sloppy Potato Board",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "electron/**",
+      "dist/**",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "resources",
+        "to": ".",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "fileAssociations": [
+      {
+        "ext": "potatopack",
+        "name": "Sloppy Potato Sound Pack",
+        "description": "Sloppy Potato Board sound pack",
+        "icon": "build/icon.ico"
+      }
+    ],
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Sloppy Potato Board",
+      "artifactName": "SloppyPotatoBoard-Setup-${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "SloppyPotatoBoard-Portable-${version}.${ext}"
+    },
+    "electronLanguages": [
+      "en-US"
+    ],
+    "compression": "maximum",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "ryansm1986",
+        "repo": "sloppypotatoboard",
+        "releaseType": "release"
+      }
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ryansm1986/sloppypotatoboard.git"
+  },
+  "homepage": "https://github.com/ryansm1986/sloppypotatoboard"
+}

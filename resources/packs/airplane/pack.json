@@ -1,0 +1,236 @@
+{
+  "format": "sloppy-potato-pack",
+  "version": 1,
+  "id": "airplane",
+  "category": "airplane",
+  "order": 1,
+  "name": "Airplane",
+  "emoji": "✈️",
+  "sounds": [
+    {
+      "id": "seatbelt",
+      "name": "Seatbelt Sign",
+      "emoji": "🔔",
+      "color": "#4dabf7",
+      "hotkey": "num1",
+      "file": "seatbelt.flac",
+      "tags": [
+        "chime"
+      ]
+    },
+    {
+      "id": "bing-bong",
+      "name": "Call Button Bing-Bong",
+      "emoji": "🛎️",
+      "color": "#38d9a9",
+      "hotkey": "num2",
+      "file": "bing-bong.flac",
+      "tags": [
+        "chime"
+      ]
+    },
+    {
+      "id": "no-healer",
+      "name": "No Healer",
+      "emoji": "🩹",
+      "color": "#ff6b6b",
+      "hotkey": "num3",
+      "file": "no-healer.flac",
+      "tags": [
+        "announcement",
+        "captain"
+      ]
+    },
+    {
+      "id": "skill-issue",
+      "name": "Skill Issue Turbulence",
+      "emoji": "🌪️",
+      "color": "#748ffc",
+      "hotkey": "num4",
+      "file": "skill-issue.flac",
+      "tags": [
+        "announcement",
+        "captain"
+      ]
+    },
+    {
+      "id": "ping",
+      "name": "Lower Than Your Ping",
+      "emoji": "📶",
+      "color": "#38d9a9",
+      "hotkey": "num5",
+      "file": "ping.flac",
+      "tags": [
+        "announcement",
+        "captain"
+      ]
+    },
+    {
+      "id": "gg-go-next",
+      "name": "GG Go Next",
+      "emoji": "🛬",
+      "color": "#ffa94d",
+      "hotkey": "num6",
+      "file": "gg-go-next.flac",
+      "tags": [
+        "announcement",
+        "captain"
+      ]
+    },
+    {
+      "id": "mute-your-mic",
+      "name": "Mute Your Mic",
+      "emoji": "🎙️",
+      "color": "#f783ac",
+      "hotkey": "num7",
+      "file": "mute-your-mic.flac",
+      "tags": [
+        "announcement",
+        "attendant"
+      ]
+    },
+    {
+      "id": "sit-down",
+      "name": "Sit. Down.",
+      "emoji": "💺",
+      "color": "#ffd43b",
+      "hotkey": "num8",
+      "file": "sit-down.flac",
+      "tags": [
+        "announcement",
+        "captain"
+      ]
+    },
+    {
+      "id": "anyone-fly",
+      "name": "Anyone Know How To Fly?",
+      "emoji": "🧑‍✈️",
+      "color": "#4dabf7",
+      "hotkey": "num9",
+      "file": "anyone-fly.flac",
+      "tags": [
+        "announcement",
+        "captain"
+      ]
+    },
+    {
+      "id": "left-wing",
+      "name": "Left Wing Update",
+      "emoji": "🛩️",
+      "color": "#b197fc",
+      "hotkey": null,
+      "file": "left-wing.flac",
+      "tags": [
+        "announcement",
+        "captain"
+      ]
+    },
+    {
+      "id": "one-more-lap",
+      "name": "One More Lap",
+      "emoji": "🔁",
+      "color": "#69db7c",
+      "hotkey": null,
+      "file": "one-more-lap.flac",
+      "tags": [
+        "announcement",
+        "captain"
+      ]
+    },
+    {
+      "id": "tuna",
+      "name": "Tuna Sandwich",
+      "emoji": "🐟",
+      "color": "#4dabf7",
+      "hotkey": null,
+      "file": "tuna.flac",
+      "tags": [
+        "announcement",
+        "captain"
+      ]
+    },
+    {
+      "id": "lag-spike",
+      "name": "Lag Spike Safety Demo",
+      "emoji": "🛟",
+      "color": "#ff6b6b",
+      "hotkey": null,
+      "file": "lag-spike.flac",
+      "tags": [
+        "announcement",
+        "attendant"
+      ]
+    },
+    {
+      "id": "carrying",
+      "name": "Absolutely Carrying",
+      "emoji": "🏆",
+      "color": "#ffd43b",
+      "hotkey": null,
+      "file": "carrying.flac",
+      "tags": [
+        "announcement",
+        "captain"
+      ]
+    },
+    {
+      "id": "rage-quit",
+      "name": "Rage Quit Policy",
+      "emoji": "😤",
+      "color": "#ffa94d",
+      "hotkey": null,
+      "file": "rage-quit.flac",
+      "tags": [
+        "announcement",
+        "captain"
+      ]
+    },
+    {
+      "id": "no-snacks",
+      "name": "No Snacks For You",
+      "emoji": "🥨",
+      "color": "#e599f7",
+      "hotkey": null,
+      "file": "no-snacks.flac",
+      "tags": [
+        "announcement",
+        "attendant"
+      ]
+    },
+    {
+      "id": "biscuit",
+      "name": "Co-Pilot Biscuit",
+      "emoji": "🐕",
+      "color": "#ffa94d",
+      "hotkey": null,
+      "file": "biscuit.flac",
+      "tags": [
+        "announcement",
+        "captain"
+      ]
+    },
+    {
+      "id": "respawn",
+      "name": "Wait For Respawn",
+      "emoji": "⏳",
+      "color": "#748ffc",
+      "hotkey": null,
+      "file": "respawn.flac",
+      "tags": [
+        "announcement",
+        "captain"
+      ]
+    },
+    {
+      "id": "jet-takeoff",
+      "name": "Jet Takeoff",
+      "emoji": "🛫",
+      "color": "#748ffc",
+      "hotkey": null,
+      "file": "jet-takeoff.flac",
+      "tags": [
+        "effect"
+      ]
+    }
+  ]
+}

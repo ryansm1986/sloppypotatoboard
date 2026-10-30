@@ -1,0 +1,27 @@
+# Push a tag like v1.2.0 and this builds the Windows installer + portable exe and
+# publishes them as a GitHub release. Installed copies of the app pick it up automatically.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: Build and publish
+        run: npm run release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

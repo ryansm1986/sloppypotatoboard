@@ -1,0 +1,127 @@
+{
+  "format": "sloppy-potato-pack",
+  "version": 1,
+  "id": "cockpit",
+  "category": "cockpit",
+  "order": 3,
+  "name": "Cockpit",
+  "emoji": "🎯",
+  "sounds": [
+    {
+      "id": "lock-on",
+      "name": "Lock-On",
+      "emoji": "🎯",
+      "color": "#ff6b6b",
+      "tags": [
+        "lock-on",
+        "alert"
+      ],
+      "file": "lock-on.flac",
+      "hotkey": null
+    },
+    {
+      "id": "missile-warning",
+      "name": "Missile Lock Warning",
+      "emoji": "🚨",
+      "color": "#ffa94d",
+      "tags": [
+        "lock-on",
+        "alert"
+      ],
+      "file": "missile-warning.flac",
+      "hotkey": null
+    },
+    {
+      "id": "sidewinder",
+      "name": "Sidewinder Tone",
+      "emoji": "🐍",
+      "color": "#69db7c",
+      "tags": [
+        "lock-on",
+        "alert"
+      ],
+      "file": "sidewinder.flac",
+      "hotkey": null
+    },
+    {
+      "id": "missile-lock-voice",
+      "name": "Warning: Missile Lock",
+      "emoji": "⚠️",
+      "color": "#ffd43b",
+      "tags": [
+        "alert",
+        "voice"
+      ],
+      "file": "missile-lock-voice.flac",
+      "hotkey": null
+    },
+    {
+      "id": "pull-up",
+      "name": "Pull Up! Pull Up!",
+      "emoji": "⛰️",
+      "color": "#ff6b6b",
+      "tags": [
+        "alert",
+        "voice"
+      ],
+      "file": "pull-up.flac",
+      "hotkey": null
+    },
+    {
+      "id": "fox-two",
+      "name": "Fox Two!",
+      "emoji": "🚀",
+      "color": "#748ffc",
+      "tags": [
+        "radio",
+        "lock-on"
+      ],
+      "file": "fox-two.flac",
+      "hotkey": null
+    },
+    {
+      "id": "bogey",
+      "name": "Bogey On Your Six",
+      "emoji": "🛩️",
+      "color": "#b197fc",
+      "tags": [
+        "radio"
+      ],
+      "file": "bogey.flac",
+      "hotkey": null
+    },
+    {
+      "id": "cleared-takeoff",
+      "name": "Cleared For Takeoff",
+      "emoji": "🗼",
+      "color": "#38d9a9",
+      "tags": [
+        "radio"
+      ],
+      "file": "cleared-takeoff.flac",
+      "hotkey": null
+    },
+    {
+      "id": "mayday",
+      "name": "Mayday (Skill Issue)",
+      "emoji": "📻",
+      "color": "#f783ac",
+      "tags": [
+        "radio"
+      ],
+      "file": "mayday.flac",
+      "hotkey": null
+    },
+    {
+      "id": "go-around",
+      "name": "Tower: Go Around",
+      "emoji": "🔁",
+      "color": "#4dabf7",
+      "tags": [
+        "radio"
+      ],
+      "file": "go-around.flac",
+      "hotkey": null
+    }
+  ]
+}
