@@ -258,6 +258,18 @@
       ],
       "file": "holiest-now-boarding.flac",
       "hotkey": null
+    },
+    {
+      "id": "rain-monotone",
+      "name": "Monotone Captain: Rain",
+      "emoji": "🌧️",
+      "color": "#748ffc",
+      "tags": [
+        "announcement",
+        "captain"
+      ],
+      "file": "rain-monotone.flac",
+      "hotkey": null
     }
   ]
 }

@@ -14,10 +14,10 @@ const { Library } = require('../electron/library');
 
   const airplane = d().sounds.filter((s) => s.category === 'airplane');
   const slots = d().sounds.filter((s) => s.category === 'itysl');
-  assert.equal(airplane.length, 40, 'seeds both airplane batches into one board');
+  assert.equal(airplane.length, 41, 'seeds both airplane batches into one board');
   assert.equal(d().sounds.filter((s) => s.category === 'cockpit').length, 10, 'seeds the cockpit board');
   assert.deepEqual(d().categories.map((c) => c.id), ['airplane', 'cockpit', 'itysl', 'mine']);
-  assert.equal(d().installedSounds.length, 19 + 21 + 10, 'remembers every bundled sound it installed');
+  assert.equal(d().installedSounds.length, 19 + 22 + 10, 'remembers every bundled sound it installed');
   assert.ok(slots.length >= 5 && slots.every((s) => !s.file), 'seeds empty ITYSL slots');
   assert.equal(airplane[0].hotkey, 'num1');
   assert.deepEqual(airplane[0].tags, ['chime']);
@@ -60,10 +60,10 @@ const { Library } = require('../electron/library');
   const up = new Library(oldDir, res);
   await up.init();
   assert.deepEqual(up.data.categories.map((c) => c.id), ['airplane', 'cockpit', 'itysl', 'mine'], 'new board slots in before ITYSL');
-  assert.equal(up.data.sounds.filter((s) => s.category === 'airplane').length, 2 + 21, 'adds batch 2, not batch 1 again');
+  assert.equal(up.data.sounds.filter((s) => s.category === 'airplane').length, 2 + 22, 'adds batch 2, not batch 1 again');
   assert.equal(up.data.sounds[2].category, 'airplane', 'batch 2 lands right after the existing airplane sounds');
   assert.deepEqual(up.data.sounds[0].tags, ['chime'], 'backfills tags');
-  assert.deepEqual(up.newPacks.map((p) => [p.name, p.count]), [['Airplane', 21], ['Cockpit', 10]], 'reports new sounds per board');
+  assert.deepEqual(up.newPacks.map((p) => [p.name, p.count]), [['Airplane', 22], ['Cockpit', 10]], 'reports new sounds per board');
   up.close();
 
   // tags can be edited and are cleaned up
@@ -93,12 +93,12 @@ const { Library } = require('../electron/library');
   // pack roundtrip
   const pack = path.join(tmp, 'Airplane.potatopack');
   const ex = await lib.exportPack('airplane', pack);
-  assert.equal(ex.count, 39);
+  assert.equal(ex.count, 40);
   const before = d().sounds.length;
   const im = await lib.importPack(pack);
-  assert.equal(im.count, 39);
+  assert.equal(im.count, 40);
   assert.equal(im.name, 'Airplane 2', 'dedupes the board name');
-  assert.equal(d().sounds.length, before + 39);
+  assert.equal(d().sounds.length, before + 40);
   assert.ok(d().sounds.filter((s) => s.category === im.category).every((s) => s.tags.length), 'tags travel with packs');
   assert.ok(d().sounds.filter((s) => s.category === im.category).every((s) => !s.hotkey), 'hotkeys are not imported');
 
