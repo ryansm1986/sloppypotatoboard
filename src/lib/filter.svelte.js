@@ -6,6 +6,7 @@ export const TAGS = {
   announcement: ['📢', 'Announcements'],
   captain: ['🧑‍✈️', 'Captain'],
   attendant: ['💁', 'Flight attendant'],
+  gate: ['🛫', 'Gate'],
   chime: ['🔔', 'Chimes'],
   'lock-on': ['🎯', 'Lock-on'],
   alert: ['🚨', 'Alerts'],

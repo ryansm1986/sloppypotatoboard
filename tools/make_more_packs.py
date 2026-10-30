@@ -37,6 +37,7 @@ TOWER = dict(voice="en-US-AriaNeural", rate="+8%", pitch="+0Hz")
 WINGMAN = dict(voice="en-US-BrianNeural", rate="+14%", pitch="+0Hz")
 BETTY = dict(voice="en-US-JennyNeural", rate="-8%", pitch="-3Hz")
 GPWS = dict(voice="en-US-GuyNeural", rate="-6%", pitch="-14Hz")
+GATE_AGENT = dict(voice="en-US-AvaMultilingualNeural", rate="+0%", pitch="+0Hz")
 
 # id, name, emoji, color, voice, role, text
 CABIN = [
@@ -97,6 +98,9 @@ CABIN = [
     ("holiest-airlines-captain", "Holiest Airlines (Captain)", "🙏", "#e599f7", CAPTAIN, "captain",
      "Folks, this is your captain. We have arrived. Thank you for flying with Holiest Airlines... "
      "and have a blessed day."),
+    ("holiest-now-boarding", "Holiest Airlines: Now Boarding", "🛫", "#38d9a9", GATE_AGENT, "gate",
+     "Holiest Airlines flight seven seven seven, with service to the Pearly Gates, is now boarding at gate one. "
+     "Holiest Airlines, now boarding at gate one."),
 ]
 
 
@@ -282,6 +286,57 @@ COCKPIT_LINES = {
 }
 
 
+def terminal_ir(rt60=1.9, length=2.6):
+    """Big, hard airport concourse: long dark tail, plus the same line arriving late from the next speaker over."""
+    n = int(length * SR)
+    t = np.arange(n) / SR
+    tail = rng.standard_normal(n) * np.exp(-6.91 * t / rt60)
+    tail = filt(filt(tail, "lowpass", 3200), "highpass", 160)
+    ramp = int(0.04 * SR)
+    tail[:ramp] *= np.linspace(0, 1, ramp)
+    tail /= np.max(np.abs(tail))
+    ir = tail * 0.22
+    for d, g in [(0.0, 1.0), (0.019, 0.3), (0.043, 0.22), (0.087, 0.34), (0.141, 0.2), (0.233, 0.12)]:
+        ir[int(d * SR)] += g
+    return ir
+
+
+def murmur(n, level_db=-40):
+    """Concourse bed: crowd babble, HVAC rumble and the odd distant rolling suitcase."""
+    w = rng.standard_normal(n + SR)
+    babble = filt(w, "bandpass", [250, 1600], 2)
+    t = np.arange(len(w)) / SR
+    swell = 1 + 0.35 * np.sin(2 * np.pi * 0.11 * t + 1.3) + 0.2 * np.sin(2 * np.pi * 0.37 * t)
+    hvac = filt(rng.standard_normal(len(w)), "lowpass", 120, 2) * 2.2
+    y = babble * swell + hvac
+    y = y[SR:]
+    return y / rms(y) * db(level_db)
+
+
+def terminal_chime():
+    """Three rising notes, soft and round, through the ceiling speakers."""
+    out = np.zeros(int(2.8 * SR))
+    for i, f in enumerate([587.3, 740.0, 880.0]):
+        place(out, bell(f, dur=2.2, decay=0.7), 0.02 + i * 0.36, 0.8)
+    return overhead_speaker(out)
+
+
+def make_gate_announcement(voice_audio):
+    voice = ap.pa_voice(voice_audio)
+    voice_at = 1.3
+    total = voice_at + len(voice) / SR + 1.5
+    n = int(total * SR)
+    dry = np.zeros(n)
+    place(dry, terminal_chime(), 0.02, 0.3)
+    place(dry, voice, voice_at)
+    wet = signal.fftconvolve(dry, terminal_ir())[:n]
+    out = dry * 0.55 + wet * 0.5
+    out += fade(murmur(n), 0.4, 0.8)
+    out = fade(out, 0.002, 0.6)
+    voiced = out[int(voice_at * SR): int(voice_at * SR) + len(voice)]
+    return finish(out, target_rms_db=-17, ceiling_db=-1, voiced=voiced)
+
+
 def write_pack(folder, meta, sounds):
     out = ap.ROOT / "resources" / "packs" / folder
     out.mkdir(parents=True, exist_ok=True)
@@ -305,7 +360,7 @@ async def main():
     cabin = []
     for (sid, name, emoji, color, _who, role, _text), v in zip(CABIN, voices):
         reseed(sid)
-        audio = make_announcement(v)
+        audio = make_gate_announcement(v) if role == "gate" else make_announcement(v)
         report(name, audio)
         cabin.append(dict(id=sid, name=name, emoji=emoji, color=color, tags=["announcement", role], audio=audio))
     write_pack("airplane-2", dict(id="airplane-2", category="airplane", order=2, name="Airplane", emoji="✈️"), cabin)

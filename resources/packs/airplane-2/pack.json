@@ -246,6 +246,18 @@
       ],
       "file": "holiest-airlines-captain.flac",
       "hotkey": null
+    },
+    {
+      "id": "holiest-now-boarding",
+      "name": "Holiest Airlines: Now Boarding",
+      "emoji": "🛫",
+      "color": "#38d9a9",
+      "tags": [
+        "announcement",
+        "gate"
+      ],
+      "file": "holiest-now-boarding.flac",
+      "hotkey": null
     }
   ]
 }
