@@ -3,3 +3,5 @@ dist/
 release/
 tools/.venv/
 tools/.cache/
+__pycache__/
+*.pyc
