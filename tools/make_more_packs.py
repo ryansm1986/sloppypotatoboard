@@ -37,7 +37,6 @@ TOWER = dict(voice="en-US-AriaNeural", rate="+8%", pitch="+0Hz")
 WINGMAN = dict(voice="en-US-BrianNeural", rate="+14%", pitch="+0Hz")
 BETTY = dict(voice="en-US-JennyNeural", rate="-8%", pitch="-3Hz")
 GPWS = dict(voice="en-US-GuyNeural", rate="-6%", pitch="-14Hz")
-DEADPAN_CAPTAIN = dict(voice="en-US-AndrewMultilingualNeural", rate="-5%", pitch="-8Hz")
 GATE_AGENT = dict(voice="en-US-AvaMultilingualNeural", rate="+0%", pitch="+0Hz")
 
 # id, name, emoji, color, voice, role, text
@@ -102,13 +101,13 @@ CABIN = [
     ("holiest-now-boarding", "Holiest Airlines: Now Boarding", "🛫", "#38d9a9", GATE_AGENT, "gate",
      "Holiest Airlines flight seven seven seven, with service to the Pearly Gates, is now boarding at gate one. "
      "Holiest Airlines, now boarding at gate one."),
-    ("rain-monotone", "Monotone Captain: Rain", "🌧️", "#748ffc", DEADPAN_CAPTAIN, "captain",
-     "Folks, this is your captain. The weather at our destination is rain. It has been raining for three weeks. "
-     "It will be raining when we land. It will be raining when you leave. Enjoy your stay."),
+    ("rain-destination", "Rain At Destination", "🌧️", "#748ffc", CAPTAIN, "captain",
+     "Folks, this is your captain. Quick weather update for our destination: it's raining, it's been raining, "
+     "and it's probably going to keep raining. We'll have you on the ground in about twenty minutes."),
 ]
 
-# lines delivered on one flat note (see monotone())
-MONOTONE = {"rain-monotone"}
+# redone takes: the new sound swaps in for these wherever a library already has them
+REPLACES = {"rain-destination": ["rain-monotone"]}
 
 
 # ----------------------------------------------------------------------------- building blocks
@@ -328,21 +327,6 @@ def terminal_chime():
     return overhead_speaker(out)
 
 
-def monotone(x, keep=0.08):
-    """Iron the melody out of a line: WORLD vocoder, every voiced frame pulled to the speaker's median pitch."""
-    import pyworld as pw
-
-    x = np.ascontiguousarray(x, dtype=np.float64)
-    f0, t = pw.harvest(x, SR, f0_floor=60, f0_ceil=300, frame_period=5)
-    sp = pw.cheaptrick(x, f0, t, SR)
-    aper = pw.d4c(x, f0, t, SR)
-    voiced = f0 > 0
-    center = np.median(f0[voiced])
-    flat = np.where(voiced, center * (np.maximum(f0, 1) / center) ** keep, 0)
-    y = pw.synthesize(flat, sp, aper, SR, frame_period=5)[: len(x)]
-    return y / (np.max(np.abs(y)) + 1e-9) * np.max(np.abs(x))
-
-
 def make_gate_announcement(voice_audio):
     voice = ap.pa_voice(voice_audio)
     voice_at = 1.3
@@ -382,11 +366,11 @@ async def main():
     cabin = []
     for (sid, name, emoji, color, _who, role, _text), v in zip(CABIN, voices):
         reseed(sid)
-        if sid in MONOTONE:
-            v = monotone(v)
         audio = make_gate_announcement(v) if role == "gate" else make_announcement(v)
         report(name, audio)
         cabin.append(dict(id=sid, name=name, emoji=emoji, color=color, tags=["announcement", role], audio=audio))
+        if sid in REPLACES:
+            cabin[-1]["replaces"] = REPLACES[sid]
     write_pack("airplane-2", dict(id="airplane-2", category="airplane", order=2, name="Airplane", emoji="✈️"), cabin)
 
     # ---- cockpit board

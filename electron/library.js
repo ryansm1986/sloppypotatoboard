@@ -164,10 +164,17 @@ class Library extends EventEmitter {
           console.error(`Could not install ${pack.id}/${s.file}`, err);
           continue;
         }
+        d.installedSounds.push(soundKey(pack, s));
+        // a redone take swaps in where the old one sits, keeping its hotkey, volume and favorite
+        const old = (s.replaces || []).map((id) => d.sounds.find((x) => x.file === `${pack.id}-${id}.flac`)).find(Boolean);
+        if (old) {
+          await fsp.unlink(path.join(this.soundsDir, old.file)).catch(() => {}); // before the folder scan sees it
+          Object.assign(old, { file, name: s.name, emoji: s.emoji, color: s.color, tags: cleanTags(s.tags) });
+          continue;
+        }
         const hotkey = s.hotkey && !taken.has(s.hotkey.toLowerCase()) ? s.hotkey : null;
         if (hotkey) taken.add(hotkey.toLowerCase());
         d.sounds.splice(at++, 0, this.makeSound({ ...s, file, hotkey, category }));
-        d.installedSounds.push(soundKey(pack, s));
         count++;
       }
       if (count) added.push({ id: pack.id, name: pack.name, category, count });

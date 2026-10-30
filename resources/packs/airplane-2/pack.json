@@ -260,15 +260,18 @@
       "hotkey": null
     },
     {
-      "id": "rain-monotone",
-      "name": "Monotone Captain: Rain",
+      "id": "rain-destination",
+      "name": "Rain At Destination",
       "emoji": "🌧️",
       "color": "#748ffc",
       "tags": [
         "announcement",
         "captain"
       ],
-      "file": "rain-monotone.flac",
+      "replaces": [
+        "rain-monotone"
+      ],
+      "file": "rain-destination.flac",
       "hotkey": null
     }
   ]

@@ -47,6 +47,31 @@ const { Library } = require('../electron/library');
     await lib.init();
   }
 
+  // a redone take swaps in for the old one: same spot, hotkey kept, old file gone, nothing duplicated
+  {
+    const redo = d().sounds.find((s) => s.file === 'airplane-2-rain-destination.flac');
+    const at = d().sounds.indexOf(redo);
+    fs.renameSync(path.join(lib.soundsDir, redo.file), path.join(lib.soundsDir, 'airplane-2-rain-monotone.flac'));
+    Object.assign(redo, { file: 'airplane-2-rain-monotone.flac', name: 'Monotone Captain: Rain', hotkey: 'F7', favorite: true });
+    d().installedSounds = d().installedSounds.map((k) => (k === 'airplane-2/rain-destination' ? 'airplane-2/rain-monotone' : k));
+    const count = d().sounds.length;
+    lib.store.save(true);
+    lib.close();
+    const re = new Library(path.join(tmp, 'user'), res);
+    await re.init();
+    const s = re.data.sounds[at];
+    assert.equal(s.id, redo.id, 'replaces in place');
+    assert.equal(s.name, 'Rain At Destination');
+    assert.equal(s.file, 'airplane-2-rain-destination.flac');
+    assert.equal(s.hotkey, 'F7', 'keeps the hotkey');
+    assert.equal(s.favorite, true, 'keeps the favorite');
+    assert.ok(!fs.existsSync(path.join(re.soundsDir, 'airplane-2-rain-monotone.flac')), 'old take is deleted');
+    assert.equal(re.data.sounds.length, count, 'nothing added or re-imported');
+    assert.deepEqual(re.newPacks, [], 'a redo is not announced as a new sound');
+    re.close();
+    await lib.init();
+  }
+
   // upgrading a 1.0 library: only the new sounds get added, tags get backfilled
   const oldDir = path.join(tmp, 'old');
   fs.mkdirSync(path.join(oldDir, 'sounds'), { recursive: true });
