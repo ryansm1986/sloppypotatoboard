@@ -222,6 +222,30 @@
       ],
       "file": "not-your-healer.flac",
       "hotkey": null
+    },
+    {
+      "id": "holiest-airlines",
+      "name": "Holiest Airlines",
+      "emoji": "😇",
+      "color": "#ffd43b",
+      "tags": [
+        "announcement",
+        "attendant"
+      ],
+      "file": "holiest-airlines.flac",
+      "hotkey": null
+    },
+    {
+      "id": "holiest-airlines-captain",
+      "name": "Holiest Airlines (Captain)",
+      "emoji": "🙏",
+      "color": "#e599f7",
+      "tags": [
+        "announcement",
+        "captain"
+      ],
+      "file": "holiest-airlines-captain.flac",
+      "hotkey": null
     }
   ]
 }

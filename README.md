@@ -9,7 +9,7 @@ A good-looking soundboard for Windows that plays clips **through your mic** into
 - **Share boards:** right-click a board tab → *Share*. Friends double-click the `.potatopack` file to add it.
 - **Quick filter:** just start typing anywhere to filter the buttons, use the arrow keys, and press Enter to play the highlighted one. Tag chips (Captain, Flight attendant, Lock-on, Radio…) narrow it down in one click. Esc clears.
 - **Updates itself** from GitHub Releases: the installed version downloads updates in the background, and the portable exe swaps itself out on restart.
-- Comes with an **Airplane** board: seatbelt chime, call-button bing-bong, a jet takeoff, and 34 pilot / flight-attendant announcements (including the classic "fasten seatbelt sign" one) written for gamers ("No Healer", "Lower Than Your Ping", "Lavatory Camper", "Captain Is AFK"…).
+- Comes with an **Airplane** board: seatbelt chime, call-button bing-bong, a jet takeoff, and 36 pilot / flight-attendant announcements (including the classic "fasten seatbelt sign" one) written for gamers ("No Healer", "Lower Than Your Ping", "Lavatory Camper", "Captain Is AFK"…).
 - A **Cockpit** board: a lock-on tone, missile-lock warning, Sidewinder growl-to-tone, "Pull up!", "Fox two!", and tower radio chatter.
 - An **I Think You Should Leave** board with ready-made slots. Hit *Find it* on a slot, then drag the clip onto it.
 
@@ -60,8 +60,9 @@ npm run dist       # build release/ installer + portable exe locally (no publish
 ### Shipping an update
 
 1. Bump `version` in `package.json` (e.g. `1.1.0` → `1.2.0`) and commit.
-2. Tag and push: `git tag v1.2.0 && git push origin main --tags`.
-3. The **Release** GitHub Action builds both exes and publishes the release. Everyone's app finds it within a few hours (or right away via Settings → Updates → Check now).
+2. Tag it with a short note (the note becomes the release notes) and push:
+   `git tag -a v1.2.0 -m "New: ..." && git push origin main v1.2.0`
+3. The **Release** GitHub Action checks the tag matches `package.json`, builds both exes and publishes the release. Everyone's app finds it within a few hours (or right away via Settings → Updates → Check now).
 
 New bundled sound packs go in `resources/packs/<id>/pack.json`. Existing users get any pack they haven't seen yet on their next update; packs they already have (or deleted) are never re-added.
 

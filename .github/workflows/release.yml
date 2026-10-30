@@ -1,11 +1,13 @@
 # Push a tag like v1.2.0 and this builds the Windows installer + portable exe and
-# publishes them as a GitHub release. Installed copies of the app pick it up automatically.
+# publishes them as one GitHub release. Installed copies of the app pick it up automatically.
+#
+# electron-builder only builds here (--publish never); the release is created in a single
+# `gh release create` so parallel uploads can never split assets across duplicate releases.
 name: Release
 
 on:
   push:
     tags: ['v*']
-  workflow_dispatch:
 
 permissions:
   contents: write
@@ -21,7 +23,21 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
-      - name: Build and publish
-        run: npm run release
+      - run: npm run dist
+
+      - name: Publish release
+        shell: bash
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="$GITHUB_REF_NAME"
+          version="${tag#v}"
+          test "$version" = "$(node -p "require('./package.json').version")" || { echo "::error::Tag $tag does not match package.json version"; exit 1; }
+          git fetch --force origin "refs/tags/$tag:refs/tags/$tag"
+          git tag -l --format='%(contents)' "$tag" > notes.md
+          files=(release/*.exe release/*.blockmap release/latest.yml)
+          if gh release view "$tag" > /dev/null 2>&1; then
+            gh release upload "$tag" "${files[@]}" --clobber
+          else
+            gh release create "$tag" "${files[@]}" --title "$version" --notes-file notes.md --latest
+          fi

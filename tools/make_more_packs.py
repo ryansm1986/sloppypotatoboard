@@ -24,6 +24,14 @@ from make_airplane_pack import (
 
 rng = np.random.default_rng(4242)
 
+
+def reseed(sid):
+    """Give every sound its own noise seed so adding a sound never changes the others."""
+    global rng
+    seed = int.from_bytes(sid.encode()[:16].ljust(16, b"_"), "little") % (2**63)
+    rng = np.random.default_rng(seed)
+    ap.rng = np.random.default_rng(seed + 1)
+
 FIRST_OFFICER = dict(voice="en-US-BrianMultilingualNeural", rate="-4%", pitch="-2Hz")
 TOWER = dict(voice="en-US-AriaNeural", rate="+8%", pitch="+0Hz")
 WINGMAN = dict(voice="en-US-BrianNeural", rate="+14%", pitch="+0Hz")
@@ -83,6 +91,12 @@ CABIN = [
      "please report them after the flight."),
     ("not-your-healer", "I Am Not Your Healer", "🩺", "#f783ac", ATTENDANT, "attendant",
      "Sir, this is the fourth time you've pressed the call button. I am a flight attendant. I am not your healer."),
+    ("holiest-airlines", "Holiest Airlines", "😇", "#ffd43b", ATTENDANT, "attendant",
+     "Ladies and gentlemen, on behalf of the entire crew, thank you for flying with Holiest Airlines. "
+     "Have a blessed day."),
+    ("holiest-airlines-captain", "Holiest Airlines (Captain)", "🙏", "#e599f7", CAPTAIN, "captain",
+     "Folks, this is your captain. We have arrived. Thank you for flying with Holiest Airlines... "
+     "and have a blessed day."),
 ]
 
 
@@ -290,6 +304,7 @@ async def main():
     voices = await asyncio.gather(*[tts(text, **who) for (*_, who, _role, text) in CABIN])
     cabin = []
     for (sid, name, emoji, color, _who, role, _text), v in zip(CABIN, voices):
+        reseed(sid)
         audio = make_announcement(v)
         report(name, audio)
         cabin.append(dict(id=sid, name=name, emoji=emoji, color=color, tags=["announcement", role], audio=audio))
@@ -297,26 +312,30 @@ async def main():
 
     # ---- cockpit board
     lines = dict(zip(COCKPIT_LINES, await asyncio.gather(*[tts(t, **w) for w, t in COCKPIT_LINES.values()])))
+    def built(sid, fn, *args):
+        reseed(sid)
+        return fn(*args)
+
     cockpit = [
-        dict(id="lock-on", name="Lock-On", emoji="🎯", color="#ff6b6b", tags=["lock-on", "alert"], audio=make_lock_on()),
+        dict(id="lock-on", name="Lock-On", emoji="🎯", color="#ff6b6b", tags=["lock-on", "alert"], audio=built("lock-on", make_lock_on)),
         dict(id="missile-warning", name="Missile Lock Warning", emoji="🚨", color="#ffa94d", tags=["lock-on", "alert"],
-             audio=make_missile_warning()),
+             audio=built("missile-warning", make_missile_warning)),
         dict(id="sidewinder", name="Sidewinder Tone", emoji="🐍", color="#69db7c", tags=["lock-on", "alert"],
-             audio=make_sidewinder()),
+             audio=built("sidewinder", make_sidewinder)),
         dict(id="missile-lock-voice", name="Warning: Missile Lock", emoji="⚠️", color="#ffd43b", tags=["alert", "voice"],
-             audio=make_missile_lock_voice(lines["missile-lock-voice"])),
+             audio=built("missile-lock-voice", make_missile_lock_voice, lines["missile-lock-voice"])),
         dict(id="pull-up", name="Pull Up! Pull Up!", emoji="⛰️", color="#ff6b6b", tags=["alert", "voice"],
-             audio=make_pull_up(lines["pull-up"])),
+             audio=built("pull-up", make_pull_up, lines["pull-up"])),
         dict(id="fox-two", name="Fox Two!", emoji="🚀", color="#748ffc", tags=["radio", "lock-on"],
-             audio=make_fox_two(lines["fox-two"])),
+             audio=built("fox-two", make_fox_two, lines["fox-two"])),
         dict(id="bogey", name="Bogey On Your Six", emoji="🛩️", color="#b197fc", tags=["radio"],
-             audio=radio_call(lines["bogey"], cockpit_noise=True)),
+             audio=built("bogey", radio_call, lines["bogey"], True)),
         dict(id="cleared-takeoff", name="Cleared For Takeoff", emoji="🗼", color="#38d9a9", tags=["radio"],
-             audio=radio_call(lines["cleared-takeoff"])),
+             audio=built("cleared-takeoff", radio_call, lines["cleared-takeoff"])),
         dict(id="mayday", name="Mayday (Skill Issue)", emoji="📻", color="#f783ac", tags=["radio"],
-             audio=radio_call(lines["mayday"], cockpit_noise=True)),
+             audio=built("mayday", radio_call, lines["mayday"], True)),
         dict(id="go-around", name="Tower: Go Around", emoji="🔁", color="#4dabf7", tags=["radio"],
-             audio=radio_call(lines["go-around"])),
+             audio=built("go-around", radio_call, lines["go-around"])),
     ]
     for s in cockpit:
         report(s["name"], s["audio"])
