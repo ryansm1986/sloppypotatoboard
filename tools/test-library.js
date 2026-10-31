@@ -132,10 +132,52 @@ const { Library } = require('../electron/library');
   await lib.scan();
   assert.ok(d().sounds.some((s) => s.name === 'Dropped In File'), 'folder scan adds new files');
 
-  // remove
+  // delete, undo, delete for real
   const victim = d().sounds.find((s) => s.name === 'Dropped In File');
-  await lib.remove(victim.id);
-  assert.ok(!fs.existsSync(path.join(lib.soundsDir, victim.file)));
+  const victimFile = path.join(lib.soundsDir, victim.file);
+  const at = d().sounds.indexOf(victim);
+  assert.equal(lib.remove(victim.id), true);
+  assert.ok(!lib.find(victim.id), 'gone from the board right away');
+  assert.ok(fs.existsSync(victimFile), 'file kept while it can be undone');
+  await lib.scan();
+  assert.ok(!d().sounds.some((s) => s.file === victim.file), 'folder scan does not bring it back');
+  assert.equal(lib.restore(victim.id), true, 'undo');
+  assert.equal(d().sounds.findIndex((s) => s.id === victim.id), at, 'back in its old spot');
+  lib.remove(victim.id);
+  await lib.forget(victim.id);
+  assert.ok(!fs.existsSync(victimFile), 'file recycled once the undo window is over');
+  assert.equal(lib.restore(victim.id), false, 'too late to undo');
+
+  // deleted just before quitting: recycled on the next start, not re-imported
+  {
+    const last = d().sounds.find((s) => s.category === 'mine' && s.file);
+    lib.remove(last.id);
+    lib.close();
+    const re = new Library(path.join(tmp, 'user'), res);
+    await re.init();
+    assert.ok(!fs.existsSync(path.join(re.soundsDir, last.file)), 'pending delete finished at startup');
+    assert.ok(!re.data.sounds.some((s) => s.file === last.file), 'and not picked up by the folder scan');
+    assert.deepEqual(re.data.pendingTrash, []);
+    re.close();
+    await lib.init();
+  }
+
+  // a library with bundled sounds listed twice (from a 1.1 pre-release) gets one of each back
+  {
+    const cockpit = d().sounds.filter((s) => s.category === 'cockpit');
+    d().sounds.push(...cockpit.map((s, i) => ({ ...s, id: `dup${i}`, hotkey: i === 0 ? 'F9' : null })));
+    lib.store.save(true);
+    lib.close();
+    const re = new Library(path.join(tmp, 'user'), res);
+    await re.init();
+    const after = re.data.sounds.filter((s) => s.category === 'cockpit');
+    assert.equal(after.length, cockpit.length, 'duplicates removed');
+    assert.equal(after[0].id, cockpit[0].id, 'keeps the original entry');
+    assert.equal(after[0].hotkey, 'F9', "keeps the duplicate's hotkey");
+    assert.ok(after.every((s) => fs.existsSync(path.join(re.soundsDir, s.file))), 'files untouched');
+    re.close();
+    await lib.init();
+  }
 
   lib.close();
   console.log('library ok:', d().sounds.length, 'sounds,', d().categories.length, 'boards');

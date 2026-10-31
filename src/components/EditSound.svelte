@@ -2,7 +2,7 @@
   import { Play, Headphones, Trash2, FileAudio, Link, Search, Star } from '@lucide/svelte';
   import Modal from './Modal.svelte';
   import HotkeyInput from './HotkeyInput.svelte';
-  import { app, api, COLORS, EMOJIS, findSound, playSound, updateSound, removeSound, pickFiles, toast } from '../lib/store.svelte.js';
+  import { app, api, COLORS, EMOJIS, findSound, playSound, updateSound, removeSound, pickFiles } from '../lib/store.svelte.js';
   import { TAGS, tagEmoji, tagName } from '../lib/filter.svelte.js';
 
   let { id } = $props();
@@ -11,7 +11,6 @@
 
   let name = $state(findSound(id)?.name ?? '');
   let volume = $state(findSound(id)?.volume ?? 1);
-  let confirmDelete = $state(false);
   let nameTimer;
 
   $effect(() => {
@@ -24,15 +23,10 @@
     nameTimer = setTimeout(() => name.trim() && updateSound(id, { name: name.trim() }), 300);
   }
 
-  async function del() {
-    if (!confirmDelete) {
-      confirmDelete = true;
-      setTimeout(() => (confirmDelete = false), 3000);
-      return;
-    }
+  function del() {
+    const doomed = id; // the id prop reads app.modal, which close() clears
     close();
-    await removeSound(id);
-    toast('Sound deleted (it\'s in the Recycle Bin if you change your mind)', 'info');
+    removeSound(doomed); // undo lives in the toast
   }
 
   const knownTags = $derived([...new Set([...Object.keys(TAGS), ...app.library.sounds.flatMap((s) => s.tags || [])])]);
@@ -179,7 +173,7 @@
     {#snippet footer()}
       <button class="btn danger" onclick={del}>
         <Trash2 size={15} />
-        {confirmDelete ? 'Click again to delete' : 'Delete'}
+        Delete
       </button>
       <div style="flex:1"></div>
       <button class="btn primary" onclick={close}>Done</button>

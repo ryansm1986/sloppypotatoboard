@@ -4,7 +4,7 @@
   import { backOut } from 'svelte/easing';
   import {
     app, api, playSound, stopSound, updateSound, importPaths, pickFiles, importUrl, toast, cleanError,
-    recordHotkey, stopRecording,
+    recordHotkey, stopRecording, removeSound, findSound,
   } from '../lib/store.svelte.js';
   import { keyParts } from '../lib/keys.js';
   import { highlight } from '../lib/filter.svelte.js';
@@ -103,6 +103,28 @@
   }
 
   const edit = () => (app.modal = { type: 'edit', id: sound.id });
+
+  // the X button: shrink away, then delete (the toast has Undo)
+  let deleting = false;
+  function poof() {
+    if (deleting || !el) return;
+    deleting = true;
+    const anim = el.animate(
+      [
+        { transform: 'scale(1)', opacity: 1, filter: 'blur(0)' },
+        { transform: 'scale(1.04)', opacity: 1, filter: 'blur(0)', offset: 0.25 },
+        { transform: 'scale(0.55) rotate(-5deg)', opacity: 0, filter: 'blur(5px)' },
+      ],
+      { duration: 260, easing: 'cubic-bezier(.5,0,.75,0)', fill: 'forwards' },
+    );
+    anim.onfinish = async () => {
+      await removeSound(sound.id);
+      if (findSound(sound.id)) {
+        anim.cancel(); // didn't go through: put the tile back
+        deleting = false;
+      }
+    };
+  }
 
   // ---------------------------------------------------------------- drops onto an empty slot
   const isExternal = (e) => {
@@ -250,6 +272,7 @@
       <Star size={14} fill={sound.favorite ? 'currentColor' : 'none'} />
     </button>
     <button class="act" title="Edit" onclick={edit}><Pencil size={14} /></button>
+    <button class="act del" title="Delete (you can undo)" onclick={poof}><X size={15} strokeWidth={2.4} /></button>
   </div>
 
   {#if recording}
@@ -667,6 +690,11 @@
   }
   .act.on {
     color: var(--potato);
+  }
+  .act.del:hover {
+    color: #ffb3ba;
+    background: rgba(255, 93, 108, 0.22);
+    border-color: rgba(255, 93, 108, 0.55);
   }
 
   .stop {

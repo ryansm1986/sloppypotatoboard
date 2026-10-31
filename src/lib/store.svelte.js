@@ -264,8 +264,11 @@ export function stopRecording() {
 }
 
 export async function removeSound(id) {
+  const s = findSound(id);
+  if (!s) return;
   engine.stop(id);
-  await api.library.remove(id);
+  if (!(await api.library.remove(id))) return;
+  toast(`Deleted "${s.name}"`, 'info', 8000, { label: 'Undo', run: () => api.library.restore(id) });
 }
 
 export function targetCategory() {

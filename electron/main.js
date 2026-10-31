@@ -286,6 +286,7 @@ function registerIpc() {
     return { lost };
   });
   handle('library:remove', (id) => library.remove(id));
+  handle('library:restore', (id) => library.restore(id));
   handle('library:reorder', (ids) => library.reorder(ids));
   handle('library:readSound', (id) => library.readSound(id));
   handle('library:importFiles', (paths, opts) => library.importFiles(paths, opts));

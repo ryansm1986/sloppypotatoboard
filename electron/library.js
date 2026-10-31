@@ -9,6 +9,7 @@ const { JsonStore } = require('./store');
 const AUDIO_EXT = new Set(['.mp3', '.wav', '.ogg', '.oga', '.flac', '.m4a', '.aac', '.webm', '.opus']);
 const PACK_EXT = new Set(['.potatopack', '.zip']);
 const MAX_BYTES = 40 * 1024 * 1024;
+const UNDO_MS = 10000; // how long a deleted sound's file waits before it goes to the Recycle Bin
 
 const COLORS = ['#ff6b6b', '#ffa94d', '#ffd43b', '#69db7c', '#38d9a9', '#4dabf7', '#748ffc', '#b197fc', '#f783ac', '#e599f7'];
 const EMOJIS = ['🥔', '🔊', '💥', '🎺', '🤡', '🦆', '🚨', '🎉', '👀', '😂', '🔥', '💀', '🐸', '🍟', '🎸', '🥁', '📣', '🧨', '🫠', '🤌'];
@@ -65,6 +66,7 @@ class Library extends EventEmitter {
     this.watcher = null;
     this.scanTimer = null;
     this.busy = 0; // imports in flight; folder scans wait for them
+    this.undo = new Map(); // id -> { sound, index, timer } for sounds deleted in the last few seconds
   }
 
   async guarded(fn) {
@@ -90,6 +92,7 @@ class Library extends EventEmitter {
     if (this.fresh) this.addSlots();
     this.ensureCategory('mine', 'My Sounds', '🥔');
     this.store.save(true);
+    await this.emptyTrash(); // deletes from last time that never got past their undo window
     await this.scan();
     this.watch();
   }
@@ -114,6 +117,21 @@ class Library extends EventEmitter {
     }
     delete d.installedPacks;
     for (const s of d.sounds) s.tags = cleanTags(s.tags);
+
+    // a 1.1 pre-release could add a bundled sound twice (two entries, one file); keep one of each
+    const bundled = new Set(packs.flatMap((p) => p.sounds.map((s) => `${p.id}-${s.file}`)));
+    const first = new Map();
+    d.sounds = d.sounds.filter((s) => {
+      if (!bundled.has(s.file)) return true;
+      const keep = first.get(s.file);
+      if (!keep) {
+        first.set(s.file, s);
+        return true;
+      }
+      keep.hotkey ||= s.hotkey;
+      keep.favorite ||= s.favorite;
+      return false;
+    });
     d.version = 2;
   }
 
@@ -259,13 +277,48 @@ class Library extends EventEmitter {
     return lost;
   }
 
-  async remove(id) {
-    const s = this.find(id);
-    if (!s) return;
-    this.data.sounds = this.data.sounds.filter((x) => x.id !== id);
+  /** Deletes right away, but the file only goes to the Recycle Bin once the undo window has passed. */
+  remove(id) {
+    const index = this.data.sounds.findIndex((x) => x.id === id);
+    if (index === -1) return false;
+    const [sound] = this.data.sounds.splice(index, 1);
+    if (sound.file) (this.data.pendingTrash ||= []).push(sound.file);
+    this.undo.set(id, { sound, index, timer: setTimeout(() => this.forget(id), UNDO_MS) });
     this.changed();
-    const p = this.filePath(s);
-    if (p && !this.data.sounds.some((x) => x.file === s.file)) await this.trash(p).catch(() => {});
+    return true;
+  }
+
+  restore(id) {
+    const u = this.undo.get(id);
+    if (!u) return false;
+    clearTimeout(u.timer);
+    this.undo.delete(id);
+    const d = this.data;
+    d.pendingTrash = (d.pendingTrash || []).filter((f) => f !== u.sound.file);
+    const key = u.sound.hotkey?.toLowerCase();
+    if (key && d.sounds.some((x) => x.hotkey?.toLowerCase() === key)) u.sound.hotkey = null; // re-used meanwhile
+    d.sounds.splice(Math.min(u.index, d.sounds.length), 0, u.sound);
+    this.changed();
+    return true;
+  }
+
+  async forget(id) {
+    clearTimeout(this.undo.get(id)?.timer);
+    this.undo.delete(id);
+    await this.emptyTrash();
+  }
+
+  /** Recycle files of deleted sounds, except ones that can still be undone or are in use again. */
+  async emptyTrash() {
+    const d = this.data;
+    const held = new Set([...this.undo.values()].map((u) => u.sound.file));
+    const due = (d.pendingTrash || []).filter((f) => !held.has(f));
+    if (!due.length) return;
+    d.pendingTrash = d.pendingTrash.filter((f) => held.has(f));
+    this.store.save();
+    for (const f of due) {
+      if (!d.sounds.some((x) => x.file === f)) await this.trash(path.join(this.soundsDir, f)).catch(() => {});
+    }
   }
 
   /** Reorder a (possibly filtered) subset of sounds; everything else keeps its slot. */
@@ -453,7 +506,7 @@ class Library extends EventEmitter {
       return;
     }
     const present = new Set(names);
-    const known = new Set(this.data.sounds.map((s) => s.file).filter(Boolean));
+    const known = new Set([...this.data.sounds.map((s) => s.file).filter(Boolean), ...(this.data.pendingTrash || [])]);
     let dirty = false;
 
     const before = this.data.sounds.length;
@@ -481,6 +534,8 @@ class Library extends EventEmitter {
 
   close() {
     this.watcher?.close();
+    for (const u of this.undo.values()) clearTimeout(u.timer); // their files get recycled on the next start
+    this.undo.clear();
     this.store.flush();
   }
 }

@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('potato', {
   library: {
     update: invoke('library:update'),
     remove: invoke('library:remove'),
+    restore: invoke('library:restore'),
     reorder: invoke('library:reorder'),
     readSound: invoke('library:readSound'),
     importFiles: invoke('library:importFiles'),
